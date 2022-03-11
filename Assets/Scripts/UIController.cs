@@ -15,4 +15,12 @@ public class UIController : MonoBehaviour {
     public void StartGame() {
         SceneManager.LoadScene(1);
     }
+
+    public void GoToHighScore() {
+        SceneManager.LoadScene(2);
+    }
+
+    public void GoToSettings() {
+        SceneManager.LoadScene(3);
+    }
 }

@@ -30,6 +30,7 @@ public class MainManager : MonoBehaviour {
 
             Instantiate(DataPrefab);
             Data.Instance.SetDefault();
+            Data.Instance.LoadData();
         }
 
         const float step = 0.6f;
@@ -77,25 +78,26 @@ public class MainManager : MonoBehaviour {
     }
 
     public void UpdateBestScoreField() {
-        if (m_Points > Data.Instance.bestScore.points) {
-            Data.Instance.bestScore.playerName = Data.Instance.playerName;
-            Data.Instance.bestScore.points = m_Points;
+        if (m_Points > Data.Instance.BestScore.points) {
+            Data.Instance.AddBestScore(new Data.BestScoreClass() {playerName = Data.Instance.playerName, points = m_Points});
         }
 
-        BestScoreText.text = $"Best Score: {Data.Instance.bestScore.playerName}: {Data.Instance.bestScore.points}";
+        BestScoreText.text = $"Best Score: {Data.Instance.BestScore.playerName}: {Data.Instance.BestScore.points}";
     }
 
     void AddPoint(int point) {
         m_Points += point;
         UpdateScoreField();
-        UpdateBestScoreField();
+        // UpdateBestScoreField();
     }
 
     public void GameOver() {
         m_GameOver = true;
         GameOverText.SetActive(true);
 
-        if (!testCase)
+        if (!testCase) {
+            UpdateBestScoreField();
             Data.Instance.SaveData();
+        }
     }
 }
