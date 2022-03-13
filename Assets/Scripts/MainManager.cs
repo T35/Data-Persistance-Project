@@ -1,11 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class MainManager : MonoBehaviour {
-    public GameObject DataPrefab;
+    private GameManager _gm;
 
     public Brick BrickPrefab;
     public int LineCount = 6;
@@ -13,7 +16,7 @@ public class MainManager : MonoBehaviour {
 
     public Text ScoreText;
     public Text BestScoreText;
-    public GameObject GameOverText;
+    public GameObject GameOverMenu;
 
     private bool m_Started = false;
     private int m_Points;
@@ -23,14 +26,15 @@ public class MainManager : MonoBehaviour {
     private bool testCase = false;
 
 
+    private void Awake() {
+        _gm = GameManager.Instance;
+    }
+
     // Start is called before the first frame update
     void Start() {
-        if (Data.Instance == null) {
+        if (_gm.IsLaunchingInCurrentScene()) {
             testCase = true;
-
-            Instantiate(DataPrefab);
-            Data.Instance.SetDefault();
-            Data.Instance.LoadData();
+            _gm.data.playerName = "TEST Player";
         }
 
         const float step = 0.6f;
@@ -63,7 +67,7 @@ public class MainManager : MonoBehaviour {
                 forceDir.Normalize();
 
                 Ball.transform.SetParent(null);
-                Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
+                Ball.AddForce(forceDir * _gm.data.settings.ballStartForce, ForceMode.VelocityChange);
             }
         }
         else if (m_GameOver) {
@@ -74,15 +78,22 @@ public class MainManager : MonoBehaviour {
     }
 
     public void UpdateScoreField() {
-        ScoreText.text = $"Score ({Data.Instance.playerName}): {m_Points}";
+        ScoreText.text = $"Score ({_gm.data.playerName}): {m_Points}";
     }
 
     public void UpdateBestScoreField() {
-        if (m_Points > Data.Instance.BestScore.points) {
-            Data.Instance.AddBestScore(new Data.BestScoreClass() {playerName = Data.Instance.playerName, points = m_Points});
+        if (m_Points > 0) {
+            if (_gm.data.bestScoreList.Count < 10) {
+                _gm.data.AddBestScore(new Data.BestScoreClass(_gm.data.playerName, m_Points));
+            }
+            else if (_gm.data.bestScoreList.Count > 0) {
+                if (m_Points >= _gm.data.bestScoreList.Last().points) {
+                    _gm.data.AddBestScore(new Data.BestScoreClass(_gm.data.playerName, m_Points));
+                }
+            }
         }
 
-        BestScoreText.text = $"Best Score: {Data.Instance.BestScore.playerName}: {Data.Instance.BestScore.points}";
+        BestScoreText.text = $"Best Score: {_gm.data.BestScore.playerName}: {_gm.data.BestScore.points}";
     }
 
     void AddPoint(int point) {
@@ -93,11 +104,11 @@ public class MainManager : MonoBehaviour {
 
     public void GameOver() {
         m_GameOver = true;
-        GameOverText.SetActive(true);
-
+        GameOverMenu.SetActive(true);
+        UpdateBestScoreField();
+        
         if (!testCase) {
-            UpdateBestScoreField();
-            Data.Instance.SaveData();
+            _gm.data.SaveData();
         }
     }
 }
